@@ -1,0 +1,44 @@
+#!/bin/sh
+# Git commit-msg hook：校验提交信息是否符合 Conventional Commits 规范
+
+commit_msg_file="$1"
+first_line=$(head -n 1 "$commit_msg_file")
+
+# 跳过 merge 提交
+case "$first_line" in
+  Merge*) exit 0 ;;
+esac
+
+# 跳过 revert 自动生成的消息
+case "$first_line" in
+  Revert*) exit 0 ;;
+esac
+
+pattern='^(feat|fix|to|docs|style|refactor|perf|test|chore|revert|merge|sync)(\([^)]+\))?: .+'
+
+if ! echo "$first_line" | grep -qE "$pattern"; then
+  echo ""
+  echo "❌ Commit message 不符合规范！"
+  echo ""
+  echo "正确格式: <type>(<scope>): <subject>"
+  echo ""
+  echo "type 可选: feat | fix | to | docs | style | refactor | perf | test | chore | revert | merge | sync"
+  echo ""
+  echo "示例:"
+  echo "  feat(auth): 实现用户登录功能"
+  echo "  fix(quiz): 修复选项不足时的报错"
+  echo "  docs: 补充 Git 提交规范文档"
+  echo ""
+  echo "详见 docs/GIT_GUIDE.md"
+  exit 1
+fi
+
+# subject 长度检查（去掉 type(scope): 前缀）
+subject=$(echo "$first_line" | sed -E 's/^[^(]+(\([^)]+\))?: //')
+subject_len=$(printf '%s' "$subject" | wc -c | tr -d ' ')
+if [ "$subject_len" -gt 100 ]; then
+  echo "❌ subject 过长（建议不超过 50 字，当前 ${subject_len} 字节）"
+  exit 1
+fi
+
+exit 0
