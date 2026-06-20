@@ -108,4 +108,3 @@ H2 控制台：`http://localhost:3500/h2-console`（JDBC URL: `jdbc:h2:mem:wordm
 |------|------|
 | [docs/项目文档.md](docs/项目文档.md) | 项目完整说明（功能、架构、数据库、接口、Git 规范） |
 | [docs/交付与答辩清单.md](docs/交付与答辩清单.md) | **6月21日答辩交付清单（按课程要求逐项对照）** |
-| [docs/GIT_GUIDE.md](docs/GIT_GUIDE.md) | Git 分支与提交速查 |

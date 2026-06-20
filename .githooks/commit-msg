@@ -29,7 +29,7 @@ if ! echo "$first_line" | grep -qE "$pattern"; then
   echo "  fix(quiz): 修复选项不足时的报错"
   echo "  docs: 补充 Git 提交规范文档"
   echo ""
-  echo "详见 docs/GIT_GUIDE.md"
+  echo "详见 docs/项目文档.md"
   exit 1
 fi
 
