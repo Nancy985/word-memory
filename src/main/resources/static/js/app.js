@@ -333,6 +333,25 @@ async function openBookDetail(bookId) {
 
 document.getElementById('btn-back-books').addEventListener('click', () => loadBooks());
 
+document.getElementById('btn-import-words').addEventListener('click', () => {
+  const bookId = getSelectedBookId();
+  showModal('批量导入单词', `
+    <div class="import-hint">
+      每行一个单词，格式：<code>单词,音标,释义,例句</code><br>
+      最少格式：<code>单词,释义</code><br>
+      示例：<code>hello,/həˈloʊ/,int. 你好,Hello world!</code>
+    </div>
+    <label>粘贴 CSV 内容<textarea name="csv" rows="10" placeholder="abandon,/əˈbændən/,v. 放弃；遗弃,He abandoned his plan.&#10;ability,/əˈbɪləti/,n. 能力；才能,"></textarea></label>`, async () => {
+    const csv = document.getElementById('modal-content').querySelector('[name=csv]').value;
+    try {
+      const result = await api.importWords(bookId, csv);
+      closeModal();
+      toast(`导入成功 ${result.imported} 个，跳过 ${result.skipped} 个`);
+      openBookDetail(bookId);
+    } catch (err) { toast(err.message, true); }
+  });
+});
+
 document.getElementById('btn-add-word').addEventListener('click', () => {
   const bookId = getSelectedBookId();
   showModal('添加单词', `
@@ -356,6 +375,52 @@ document.getElementById('btn-add-word').addEventListener('click', () => {
 });
 
 // ---- Memorize ----
+async function renderEbbinghausCurve(bookId) {
+  const panel = document.getElementById('ebbinghaus-panel');
+  try {
+    const curve = await api.getEbbinghausCurve(bookId);
+    const maxCount = Math.max(1, ...curve.userDistribution.map(d => d.count), 1);
+    const intervals = curve.stages.map(s => s.interval);
+    const maxIntervalIdx = intervals.length - 1;
+
+    const bars = curve.stages.map((s, i) => {
+      const dist = curve.userDistribution.find(d => d.stage === i + 1);
+      const count = dist ? dist.count : 0;
+      const height = count > 0 ? Math.max(12, (count / maxCount) * 90) : 8;
+      return `<div class="curve-bar-wrap">
+        <span class="curve-bar-count">${count || ''}</span>
+        <div class="curve-bar" style="height:${height}px" title="阶段${s.stage}: ${s.interval}"></div>
+        <span class="curve-bar-label">T${s.stage}<br>${s.interval}</span>
+      </div>`;
+    }).join('');
+
+    const stage0 = curve.userDistribution.find(d => d.stage === 0);
+    const newCount = stage0 ? stage0.count : 0;
+
+    panel.innerHTML = `
+      <h3>📈 艾宾浩斯记忆曲线</h3>
+      <p class="curve-desc">
+        答对进入下一阶段，复习间隔依次延长：5分钟 → 30分钟 → 12小时 → 1天 → 2天 → 4天 → 7天 → 15天 → 30天。
+        答错则重置到第1阶段。新词 / 未学习：<strong>${newCount}</strong> 个
+      </p>
+      <div class="curve-timeline">${bars}</div>
+      <div class="curve-legend">
+        <span>柱高 = 该阶段单词数量</span>
+        <span>实现：SpacedRepetitionUtil.java</span>
+      </div>`;
+  } catch (err) {
+    panel.innerHTML = '';
+  }
+}
+
+function renderStageTrack(stage, isNew) {
+  const labels = ['5分', '30分', '12时', '1天', '2天', '4天', '7天', '15天', '30天'];
+  const current = isNew ? 0 : Math.min(stage, labels.length - 1);
+  return `<div class="stage-track">${labels.map((l, i) =>
+    `<span class="stage-dot ${i < current ? 'done' : ''} ${i === current ? 'current' : ''}">${l}</span>`
+  ).join('')}</div>`;
+}
+
 async function loadMemorize() {
   await loadWordBooks();
   const bookId = getSelectedBookId();
@@ -364,8 +429,11 @@ async function loadMemorize() {
   if (!bookId) {
     document.getElementById('memorize-empty').classList.remove('hidden');
     document.getElementById('memorize-card').classList.add('hidden');
+    document.getElementById('ebbinghaus-panel').innerHTML = '';
     return;
   }
+
+  await renderEbbinghausCurve(bookId);
 
   try {
     const progress = await api.getProgress(bookId);
@@ -403,7 +471,8 @@ function renderMemorizeCard() {
     card.innerHTML = `
       <div class="word">${esc(w.spelling)}</div>
       <div class="phonetic">${esc(w.phonetic || '')}</div>
-      <p style="color:var(--text-muted);margin-bottom:24px">还剩 ${remaining} 个 · ${w.new ? '新词' : `第 ${w.reviewStage} 阶段`}</p>
+      ${renderStageTrack(w.reviewStage || 0, w.new)}
+      <p style="color:var(--text-muted);margin:12px 0 24px">还剩 ${remaining} 个 · ${w.new ? '新词 · 首次间隔 5 分钟' : `第 ${w.reviewStage} 阶段 · 下次 ${w.nextIntervalLabel || ''} 后复习`}</p>
       <button class="btn-reveal" id="btn-reveal">显示释义</button>`;
     document.getElementById('btn-reveal').onclick = () => { memorizeRevealed = true; renderMemorizeCard(); };
   } else {
@@ -413,10 +482,10 @@ function renderMemorizeCard() {
       <div class="meaning">${esc(w.meaning)}</div>
       ${w.exampleSentence ? `<div class="example">${esc(w.exampleSentence)}</div>` : ''}
       <div class="flashcard-actions">
-        <button class="btn-forget" id="btn-forget">不认识</button>
-        <button class="btn-know" id="btn-know">认识</button>
+        <button class="btn-forget" id="btn-forget">不认识（重置到 5 分钟）</button>
+        <button class="btn-know" id="btn-know">认识（延长间隔）</button>
       </div>
-      <span class="stage-badge">熟悉度 ${w.familiarity ?? 0}%</span>`;
+      <span class="stage-badge">熟悉度 ${w.familiarity ?? 0}% · 下次复习 ${formatDate(w.nextReviewAt)}</span>`;
     document.getElementById('btn-know').onclick = () => submitMemorize(true);
     document.getElementById('btn-forget').onclick = () => submitMemorize(false);
   }
@@ -425,9 +494,14 @@ function renderMemorizeCard() {
 async function submitMemorize(correct) {
   const w = memorizeQueue[memorizeIndex];
   try {
-    await api.submitReview(w.wordId, correct);
+    const result = await api.submitReview(w.wordId, correct);
+    toast(correct
+      ? `✓ 进入第 ${result.reviewStage} 阶段，${result.nextIntervalLabel || ''}后复习`
+      : '已重置到第 1 阶段，5 分钟后复习');
     memorizeIndex++;
     memorizeRevealed = false;
+    const bookId = getSelectedBookId();
+    if (bookId) renderEbbinghausCurve(bookId);
     renderMemorizeCard();
   } catch (err) { toast(err.message, true); }
 }

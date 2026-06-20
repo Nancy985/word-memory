@@ -2,6 +2,8 @@ package com.wordmemory.controller;
 
 import com.wordmemory.common.ApiResponse;
 import com.wordmemory.config.AuthInterceptor;
+import com.wordmemory.dto.WordImportRequest;
+import com.wordmemory.dto.WordImportResultVO;
 import com.wordmemory.dto.WordBookRequest;
 import com.wordmemory.dto.WordBookVO;
 import com.wordmemory.dto.WordRequest;
@@ -69,6 +71,15 @@ public class WordBookController {
                                        HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(AuthInterceptor.USER_ID_ATTR);
         return ApiResponse.success("添加成功", wordBookService.addWord(userId, id, body));
+    }
+
+    @PostMapping("/{id}/words/import")
+    public ApiResponse<WordImportResultVO> importWords(@PathVariable Long id,
+                                                       @RequestBody WordImportRequest body,
+                                                       HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute(AuthInterceptor.USER_ID_ATTR);
+        return ApiResponse.success("导入完成",
+                wordBookService.importWords(userId, id, body.getCsvContent()));
     }
 
     @PutMapping("/{bookId}/words/{wordId}")

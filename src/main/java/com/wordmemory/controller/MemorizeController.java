@@ -2,6 +2,7 @@ package com.wordmemory.controller;
 
 import com.wordmemory.common.ApiResponse;
 import com.wordmemory.config.AuthInterceptor;
+import com.wordmemory.dto.EbbinghausCurveVO;
 import com.wordmemory.dto.MemorizeProgressVO;
 import com.wordmemory.dto.ReviewRequest;
 import com.wordmemory.dto.ReviewWordVO;
@@ -42,5 +43,12 @@ public class MemorizeController {
                                                        HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(AuthInterceptor.USER_ID_ATTR);
         return ApiResponse.success(memorizeService.getProgress(userId, wordBookId));
+    }
+
+    @GetMapping("/curve")
+    public ApiResponse<EbbinghausCurveVO> getCurve(@RequestParam Long wordBookId,
+                                                   HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute(AuthInterceptor.USER_ID_ATTR);
+        return ApiResponse.success(memorizeService.getEbbinghausCurve(userId, wordBookId));
     }
 }

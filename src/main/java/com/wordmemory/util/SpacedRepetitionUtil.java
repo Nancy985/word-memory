@@ -48,4 +48,24 @@ public final class SpacedRepetitionUtil {
         int stageBonus = Math.min(stage * 5, 30);
         return Math.min(base + stageBonus, 100);
     }
+
+    public static String getIntervalLabel(int stage) {
+        int index = Math.min(Math.max(stage, 0), REVIEW_INTERVALS.length - 1);
+        Duration d = REVIEW_INTERVALS[index];
+        if (d.toDays() >= 1) {
+            return d.toDays() + "天";
+        }
+        if (d.toHours() >= 1) {
+            return d.toHours() + "小时";
+        }
+        return d.toMinutes() + "分钟";
+    }
+
+    public static String[] getAllIntervalLabels() {
+        String[] labels = new String[REVIEW_INTERVALS.length];
+        for (int i = 0; i < REVIEW_INTERVALS.length; i++) {
+            labels[i] = getIntervalLabel(i);
+        }
+        return labels;
+    }
 }

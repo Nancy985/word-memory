@@ -1,6 +1,7 @@
 package com.wordmemory.service;
 
 import com.wordmemory.common.BusinessException;
+import com.wordmemory.dto.EbbinghausCurveVO;
 import com.wordmemory.dto.MemorizeProgressVO;
 import com.wordmemory.dto.ReviewRequest;
 import com.wordmemory.dto.ReviewWordVO;
@@ -139,6 +140,42 @@ public class MemorizeService {
         return vo;
     }
 
+    public EbbinghausCurveVO getEbbinghausCurve(Long userId, Long wordBookId) {
+        wordBookService.getAccessibleWordBook(userId, wordBookId);
+
+        EbbinghausCurveVO curve = new EbbinghausCurveVO();
+        String[] labels = SpacedRepetitionUtil.getAllIntervalLabels();
+        List<EbbinghausCurveVO.StageInfo> stages = new ArrayList<>();
+        for (int i = 0; i < labels.length; i++) {
+            stages.add(new EbbinghausCurveVO.StageInfo(
+                    i + 1,
+                    labels[i],
+                    "第 " + (i + 1) + " 次复习间隔"
+            ));
+        }
+        curve.setStages(stages);
+
+        List<UserWordProgress> progressList = progressRepository.findAllByUserIdAndWordBookId(userId, wordBookId);
+        long totalWords = wordRepository.countByWordBookId(wordBookId);
+        long learned = progressList.size();
+        long[] counts = new long[labels.length + 1];
+
+        counts[0] = Math.max(0, totalWords - learned);
+        for (UserWordProgress p : progressList) {
+            int displayStage = Math.min(p.getReviewStage() + 1, labels.length);
+            counts[displayStage]++;
+        }
+
+        List<EbbinghausCurveVO.StageCount> distribution = new ArrayList<>();
+        for (int i = 0; i <= labels.length; i++) {
+            if (counts[i] > 0) {
+                distribution.add(new EbbinghausCurveVO.StageCount(i, counts[i]));
+            }
+        }
+        curve.setUserDistribution(distribution);
+        return curve;
+    }
+
     private ReviewWordVO toReviewWordVO(Word word, UserWordProgress progress, boolean isNew) {
         ReviewWordVO vo = new ReviewWordVO();
         vo.setWordId(word.getId());
@@ -151,10 +188,13 @@ public class MemorizeService {
             vo.setReviewStage(progress.getReviewStage());
             vo.setFamiliarity(progress.getFamiliarity());
             vo.setNextReviewAt(progress.getNextReviewAt());
+            vo.setNextIntervalLabel(SpacedRepetitionUtil.getIntervalLabel(
+                    Math.max(0, progress.getReviewStage() - 1)));
         } else {
             vo.setReviewStage(0);
             vo.setFamiliarity(0);
             vo.setNextReviewAt(LocalDateTime.now());
+            vo.setNextIntervalLabel(SpacedRepetitionUtil.getIntervalLabel(0));
         }
         return vo;
     }

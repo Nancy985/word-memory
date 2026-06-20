@@ -752,6 +752,121 @@ body {
 .detail-answer-item.correct { color: var(--green-700); }
 .detail-answer-item.wrong { color: #c0392b; }
 
+/* ---- Ebbinghaus curve ---- */
+.ebbinghaus-panel {
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.ebbinghaus-panel h3 {
+  color: var(--green-900);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.ebbinghaus-panel .curve-desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.curve-timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+  padding: 0 4px;
+  overflow-x: auto;
+}
+
+.curve-bar-wrap {
+  flex: 1;
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.curve-bar {
+  width: 100%;
+  max-width: 56px;
+  background: linear-gradient(180deg, var(--green-500), var(--green-300));
+  border-radius: 6px 6px 0 0;
+  min-height: 8px;
+  transition: height 0.3s;
+}
+
+.curve-bar.active {
+  background: linear-gradient(180deg, var(--green-700), var(--green-500));
+  box-shadow: 0 0 0 2px var(--green-pale);
+}
+
+.curve-bar-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.curve-bar-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--green-700);
+}
+
+.curve-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.stage-track {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.stage-dot {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.stage-dot.done {
+  background: var(--green-100);
+  color: var(--green-700);
+  border-color: var(--green-300);
+}
+
+.stage-dot.current {
+  background: var(--green-600);
+  color: white;
+  border-color: var(--green-600);
+}
+
+.import-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--green-50);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.import-hint code {
+  font-size: 0.8rem;
+  color: var(--green-700);
+}
+
 /* ---- Toast ---- */
 #toast-container {
   position: fixed;

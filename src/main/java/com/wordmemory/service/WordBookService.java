@@ -3,6 +3,7 @@ package com.wordmemory.service;
 import com.wordmemory.common.BusinessException;
 import com.wordmemory.dto.WordBookRequest;
 import com.wordmemory.dto.WordBookVO;
+import com.wordmemory.dto.WordImportResultVO;
 import com.wordmemory.dto.WordRequest;
 import com.wordmemory.dto.WordVO;
 import com.wordmemory.entity.Word;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -115,6 +117,59 @@ public class WordBookService {
             throw new BusinessException(400, "单词不属于该单词书");
         }
         wordRepository.delete(word);
+    }
+
+    @Transactional
+    public WordImportResultVO importWords(Long userId, Long wordBookId, String csvContent) {
+        getOwnedWordBook(userId, wordBookId);
+        if (csvContent == null || csvContent.isBlank()) {
+            throw new BusinessException("导入内容不能为空");
+        }
+
+        WordImportResultVO result = new WordImportResultVO();
+        Set<String> existing = wordRepository.findByWordBookIdOrderByIdAsc(wordBookId).stream()
+                .map(w -> w.getSpelling().toLowerCase())
+                .collect(Collectors.toSet());
+
+        String[] lines = csvContent.split("\\r?\\n");
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+            String[] parts = line.split(",", -1);
+            if (parts.length < 2) {
+                result.getErrors().add("第 " + (i + 1) + " 行格式错误，至少需要：单词,释义");
+                result.setSkipped(result.getSkipped() + 1);
+                continue;
+            }
+
+            String spelling = parts[0].trim();
+            String meaning = parts.length >= 3 ? parts[2].trim() : parts[1].trim();
+            String phonetic = parts.length >= 3 ? parts[1].trim() : "";
+            String example = parts.length >= 4 ? parts[3].trim() : "";
+
+            if (spelling.isEmpty() || meaning.isEmpty()) {
+                result.getErrors().add("第 " + (i + 1) + " 行：单词或释义为空");
+                result.setSkipped(result.getSkipped() + 1);
+                continue;
+            }
+            if (existing.contains(spelling.toLowerCase())) {
+                result.setSkipped(result.getSkipped() + 1);
+                continue;
+            }
+
+            Word word = new Word();
+            word.setWordBookId(wordBookId);
+            word.setSpelling(spelling);
+            word.setPhonetic(phonetic);
+            word.setMeaning(meaning);
+            word.setExampleSentence(example);
+            wordRepository.save(word);
+            existing.add(spelling.toLowerCase());
+            result.setImported(result.getImported() + 1);
+        }
+        return result;
     }
 
     public WordBook getAccessibleWordBook(Long userId, Long id) {

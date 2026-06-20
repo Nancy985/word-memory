@@ -120,6 +120,17 @@ const api = {
     return this.request('/api/wrong-words/stats');
   },
 
+  importWords(bookId, csvContent) {
+    return this.request(`/api/wordbooks/${bookId}/words/import`, {
+      method: 'POST',
+      body: JSON.stringify({ csvContent }),
+    });
+  },
+
+  getEbbinghausCurve(bookId) {
+    return this.request(`/api/memorize/curve?wordBookId=${bookId}`);
+  },
+
   getExams() {
     return this.request('/api/exams');
   },

@@ -12,6 +12,7 @@ public class ReviewWordVO {
     private Integer reviewStage;
     private Integer familiarity;
     private LocalDateTime nextReviewAt;
+    private String nextIntervalLabel;
     private boolean isNew;
 
     public Long getWordId() {
@@ -76,6 +77,14 @@ public class ReviewWordVO {
 
     public void setNextReviewAt(LocalDateTime nextReviewAt) {
         this.nextReviewAt = nextReviewAt;
+    }
+
+    public String getNextIntervalLabel() {
+        return nextIntervalLabel;
+    }
+
+    public void setNextIntervalLabel(String nextIntervalLabel) {
+        this.nextIntervalLabel = nextIntervalLabel;
     }
 
     public boolean isNew() {
