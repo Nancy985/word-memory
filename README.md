@@ -1,6 +1,7 @@
-# Word Memory Backend
+# 词忆 · 单词记忆网站
 
-Spring Boot 单词记忆网站后端，端口 **3500**。
+Spring Boot 单词记忆 Web 应用，端口 **3500**。  
+**完整项目文档见 [docs/项目文档.md](docs/项目文档.md)**
 
 ## 技术栈
 
@@ -101,13 +102,10 @@ H2 控制台：`http://localhost:3500/h2-console`（JDBC URL: `jdbc:h2:mem:wordm
 
 已配置允许所有来源（`allowedOriginPatterns: *`）。
 
-## Git 规范
+## 文档
 
-团队协作请阅读 **[docs/GIT_GUIDE.md](docs/GIT_GUIDE.md)**，包含分支管理策略与 Commit Message 规范。
-
-首次克隆后执行：
-
-```bash
-chmod +x scripts/setup-git.sh .githooks/commit-msg
-./scripts/setup-git.sh
-```
+| 文档 | 说明 |
+|------|------|
+| [docs/项目文档.md](docs/项目文档.md) | 项目完整说明（功能、架构、数据库、接口、Git 规范） |
+| [docs/交付与答辩清单.md](docs/交付与答辩清单.md) | **6月21日答辩交付清单（按课程要求逐项对照）** |
+| [docs/GIT_GUIDE.md](docs/GIT_GUIDE.md) | Git 分支与提交速查 |
