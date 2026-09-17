@@ -60,12 +60,20 @@ function fillBookSelects() {
 }
 
 async function loadWordBooks() {
-  wordBooks = await api.getWordBooks();
-  if (!selectedBookId && wordBooks.length) {
-    selectedBookId = wordBooks[0].id;
-    localStorage.setItem('selectedBookId', selectedBookId);
+  try {
+    wordBooks = await api.getWordBooks();
+    const ids = wordBooks.map(b => b.id);
+    if (!selectedBookId || !ids.includes(Number(selectedBookId))) {
+      selectedBookId = wordBooks[0]?.id ?? null;
+      if (selectedBookId) localStorage.setItem('selectedBookId', selectedBookId);
+      else localStorage.removeItem('selectedBookId');
+    }
+    fillBookSelects();
+  } catch (err) {
+    wordBooks = [];
+    fillBookSelects();
+    throw err;
   }
-  fillBookSelects();
 }
 
 // ---- Router ----
@@ -171,7 +179,13 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 
 // ---- Home ----
 async function loadHome() {
-  await loadWordBooks();
+  document.getElementById('home-stats').innerHTML = '<div class="empty-state card"><p>加载中…</p></div>';
+  try {
+    await loadWordBooks();
+  } catch (err) {
+    document.getElementById('home-stats').innerHTML = '<div class="empty-state card"><p>数据加载失败，请重新登录</p></div>';
+    return;
+  }
   const bookId = getSelectedBookId();
   if (!bookId) {
     document.getElementById('home-stats').innerHTML = '<div class="empty-state card"><p>还没有单词书，先去创建一个吧</p></div>';
@@ -674,9 +688,22 @@ async function showExamDetail(id) {
 // ---- Init ----
 window.addEventListener('hashchange', onHashChange);
 
-if (api.getToken()) {
-  location.hash = location.hash || '#/home';
-} else {
-  location.hash = '#/login';
+async function initApp() {
+  if (!api.getToken()) {
+    location.hash = '#/login';
+    onHashChange();
+    return;
+  }
+  try {
+    const user = await api.getMe();
+    api.setUser(user);
+    if (!location.hash || location.hash === '#/login') location.hash = '#/home';
+  } catch {
+    api.setToken(null);
+    api.setUser(null);
+    location.hash = '#/login';
+  }
+  onHashChange();
 }
-onHashChange();
+
+initApp();

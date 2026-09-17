@@ -28,6 +28,13 @@ const api = {
     const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     const json = await res.json();
 
+    if (json.code === 401 && !path.includes('/auth/login') && !path.includes('/auth/register')) {
+      this.setToken(null);
+      this.setUser(null);
+      location.hash = '#/login';
+      throw new Error(json.message || '请重新登录');
+    }
+
     if (json.code !== 200) {
       const err = new Error(json.message || '请求失败');
       err.code = json.code;
@@ -52,6 +59,10 @@ const api = {
 
   logout() {
     return this.request('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  },
+
+  getMe() {
+    return this.request('/api/auth/me');
   },
 
   getWordBooks() {
